@@ -1,0 +1,81 @@
+{
+  "all_pass": true,
+  "engine_tested": false,
+  "tests": [
+    {
+      "test": "1. dimensions 1264x848 (÷8)",
+      "pass": true,
+      "detail": "17 calques × 3 modes"
+    },
+    {
+      "test": "2a. alpha 0/255 sauf OMBRES",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "test": "2b. zéro magenta résiduel",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "test": "3. recomposition = scène (jour)",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "test": "3. recomposition = scène (crepuscule)",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "test": "3. recomposition = scène (nuit)",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "test": "3b. nuit = filtre Abyss exact (calques 02+)",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "test": "4. phases eau : même alpha, couleurs différentes",
+      "pass": true,
+      "detail": "6 phases"
+    },
+    {
+      "test": "5. dégagement 16x16 entree",
+      "pass": true,
+      "detail": "(640,440)"
+    },
+    {
+      "test": "5. dégagement 16x16 donjon_seuil",
+      "pass": true,
+      "detail": "(120,192)"
+    },
+    {
+      "test": "6. corridor ≥32 px arrivée → seuil (même composante après érosion 16)",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "test": "7. grotte connexe ≥ 40x40",
+      "pass": true,
+      "detail": "bbox [75, 115, 132, 183]"
+    },
+    {
+      "test": "8. noms uniques BEACHSKY_V1_",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "test": "9. SHA-256 calques = manifeste",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "test": "10. bande nuages bouclable 1440x136",
+      "pass": true,
+      "detail": ""
+    }
+  ]
+}
