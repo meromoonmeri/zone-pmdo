@@ -16,7 +16,7 @@ assert W % 8 == 0 and H % 8 == 0
 BR, VA, COU, SC = HERE / 'bruts', HERE / 'valides', HERE / 'couches', HERE / 'scene'
 for d in (COU, SC): d.mkdir(exist_ok=True)
 PREFIX = 'BEACHSKY_V1'
-N_PHASES = 12
+N_PHASES = 8
 
 
 def sha(p): return hashlib.sha256(Path(p).read_bytes()).hexdigest()
@@ -91,42 +91,63 @@ land &= ~nd.binary_dilation(water & ~R, iterations=1)
 labL, nL = nd.label(land); sL = np.bincount(labL.ravel()); sL[0] = 0; land = labL == sL.argmax()
 L_sable = part(sable_plate, land)
 
-# --- mer : plaque continue ; rivage/écume vs large ; phases par rotation de rampe
-sea = clean(key(load(BR / 'mer_magenta.png')))
-M = arr(sea)[..., 3] == 255
-for x in range(W):                                                                # prolonger vers le haut sous le sable
-    ys = np.where(M[:, x])[0]
+# --- mer : géométrie = composition validée (eau + écume) ; texture = brut à bandes de vagues (mer_bandes_magenta),
+# indexée comme la mer V2 du dépôt : base fixe + 8 indices de vagues qui tournent (palette cycling), écume fixe.
+sea_geo = nd.binary_closing(sea_c | foam_c, iterations=2)
+sea_geo = nd.binary_fill_holes(sea_geo) & ~nd.binary_dilation(sky_c, iterations=2)
+labS, nS = nd.label(sea_geo); sS = np.bincount(labS.ravel()); sS[0] = 0; sea_geo = labS == sS.argmax()
+bands = clean(key(load(BR / 'mer_bandes_magenta.png')), min_px=1)
+ba = arr(bands); bm = ba[..., 3] == 255
+# plaque pleine : chaque colonne prolongée vers le haut/bas à partir de ses pixels d'eau
+full = ba.copy()
+for x in range(W):
+    ys = np.where(bm[:, x])[0]
     if len(ys):
-        top = ys.min(); a_ = arr(sea); a_[:top, x] = a_[top, x]; sea = Image.fromarray(a_); M[:top, x] = True
-sea_a = arr(sea)
-sea_rgb = sea_a[..., :3].astype(int)
-lum = sea_rgb.sum(axis=2)
-deep = M & (lum < 430); near = M & ~deep
-L_mer_prof = part(sea, deep)
+        full[:ys.min(), x] = ba[ys.min(), x]; full[ys.max() + 1:, x] = ba[ys.max(), x]
+        gaps = np.where(~bm[:, x])[0]; gaps = gaps[(gaps > ys.min()) & (gaps < ys.max())]
+        for gy in gaps: full[gy, x] = ba[ys[ys < gy].max(), x]
+full[..., 3] = 255
+sea = Image.fromarray(full)
+foam_geo = sea_geo & nd.binary_dilation(foam_c, iterations=1)
+M = sea_geo
+dist_shore = nd.distance_transform_edt(M)                                       # distance au bord de l'eau
+deep = M & (dist_shore > 96)
+near = M & ~deep
+L_mer_prof = Image.fromarray(np.zeros((H, W, 4), 'uint8'))                        # réservé : base statique (vide, tout le plan cycle sur 03)
+
+V2_CYCLE = [(16,152,240),(24,160,240),(24,168,248),(40,200,248),(56,232,248),(32,176,248),(24,160,248),(32,152,248)]
 
 
-def water_phases(img, mask, n):
-    """Cycle de palette : l'eau est quantifiée sur une rampe courte de n teintes (comme une palette EoS),
-    puis chaque phase décale les indices d'un cran ; l'écume (blancs) reste fixe. Géométrie et alpha inchangés."""
-    a = arr(img); rgb = a[..., :3].astype(int)
-    foam = mask & (rgb.min(axis=2) > 215)
-    cyc = mask & ~foam
-    lum = (rgb[..., 0] * .3 + rgb[..., 1] * .59 + rgb[..., 2] * .11)
-    lo, hi = np.percentile(lum[cyc], [1, 99])
-    idx = np.clip(((lum - lo) / max(hi - lo, 1) * n).astype(int), 0, n - 1)
-    ramp = np.array([rgb[cyc & (idx == i)].mean(axis=0) if (cyc & (idx == i)).any() else [0, 0, 0] for i in range(n)])
+def water_phases(img, mask, n=8):
+    """Palette cycling V2 sur géométrie régulière : lignes de vagues ondulées tous les 16 px (2 px d'épaisseur),
+    chaque ligne porte un indice 0..7 croissant vers le rivage ; base fixe (rivage clair / large sombre) ;
+    chaque phase décale les indices d'un cran → les crêtes avancent. Aucun pixel du brut n'est réinterprété
+    (le brut à bandes ne sert plus que de témoin), donc zéro bruit ; alpha/géométrie constants."""
+    a = arr(img)
+    fo = mask & (a[..., :3].min(axis=2) > 225)
+    body = mask & ~fo
+    dist = nd.distance_transform_edt(mask)
+    shore = body.copy()                                                              # une seule base (plan d'eau peu profond, comme Beach)
+    BASE_SHORE, BASE_DEEP = np.array([32, 184, 248]), np.array([0, 112, 232])         # bases V2 (idx 12 / idx 1)
+    cyc = np.array(V2_CYCLE, float); dark_cyc = np.rint(cyc * .78)
+    yy, xx = np.mgrid[:a.shape[0], :a.shape[1]]
+    wobble = (4 * np.sin(xx / 22.0) + 2 * np.sin(xx / 7.0 + 1.3)).astype(int)
+    row = yy + wobble
+    crest = body & ((row % 16) < 2)                                                   # lignes tous les 16 px
+    line_id = (row // 16)
+    idx = (-line_id) % n                                                              # indices croissants vers le bas (rivage)
     out = []
     for p in range(n):
         b_ = a.copy(); b_[~mask] = 0; b_[mask, 3] = 255
-        # seules les teintes claires (crêtes) tournent ; la base sombre reste fixe (cycle EoS partiel)
-        k = n // 2; hi_ = cyc & (idx >= n - k)
-        b_[hi_, :3] = np.rint(ramp[n - k + ((idx[hi_] - (n - k) + p) % k)]).astype('uint8')
+        b_[shore, :3] = BASE_SHORE; b_[body & ~shore, :3] = BASE_DEEP
+        k = (idx + p) % n
+        cs, cd = crest & shore, crest & ~shore
+        b_[cs, :3] = cyc[k[cs]].astype('uint8'); b_[cd, :3] = dark_cyc[k[cd]].astype('uint8')
         out.append(Image.fromarray(b_))
     return out, n
 
 
-phases, ncols = water_phases(sea, near, N_PHASES)
-phases = phases[:N_PHASES // 2]                                                  # k = n/2 phases distinctes
+phases, ncols = water_phases(sea, M | deep, N_PHASES)                                # tout le plan d'eau cycle (comme la mer V2)
 N_PHASES = len(phases)
 
 # --- ombres calculées
@@ -185,7 +206,7 @@ TERRAIN = [('02_MER_PROFONDE', L_mer_prof), ('04_SABLE', L_sable), ('05_SENTIER_
            ('07_FALAISES_NORD', L_falaises), ('08_GROTTE_PROFONDEUR', L_grotte), ('09_POINTES_ROCHEUSES', L_pointes),
            ('10_HERBES', L_herbes), ('11_PALMIERS', L_palmiers)]
 man = {'lot': 'beachsky_v1', 'taille': [W, H], 'grille_px': 8, 'cellules': [W // 8, H // 8], 'phases_eau': N_PHASES,
-       'eau': f'calque 03 en {N_PHASES} phases : rotation circulaire de la rampe de {ncols} teintes quantifiées (équivalent palette cycling EoS), géométrie et alpha identiques ; cadence suggérée 130 ms',
+       'eau': f'calque 03 en {N_PHASES} phases : palette cycling calqué sur la mer V2 du dépôt (16 couleurs, 8 phases, base/écume fixes, 8 indices de vagues qui tournent, période spatiale 32 px) ; FrameLength=10 ticks (≈1,33 s/boucle à 60 Hz) comme MANUEL §13',
        'nuages': {'bande': f'{PREFIX}_NUAGES_BANDE_1440x136.png', 'vitesse_px_s': -4, 'boucle': True},
        'modes': {}, 'bruts': {p.name: {'sha256': sha(p), 'taille': list(Image.open(p).size)} for p in sorted(list(BR.glob('*.png')) + list(VA.glob('*.png')))}}
 for mode in ['jour', 'crepuscule', 'nuit']:

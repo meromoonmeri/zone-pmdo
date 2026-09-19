@@ -5,7 +5,7 @@
     {
       "test": "1. dimensions 1264x848 (÷8)",
       "pass": true,
-      "detail": "17 calques × 3 modes"
+      "detail": "19 calques × 3 modes"
     },
     {
       "test": "2a. alpha 0/255 sauf OMBRES",
@@ -40,7 +40,7 @@
     {
       "test": "4. phases eau : même alpha, couleurs différentes",
       "pass": true,
-      "detail": "6 phases"
+      "detail": "8 phases"
     },
     {
       "test": "5. dégagement 16x16 entree",

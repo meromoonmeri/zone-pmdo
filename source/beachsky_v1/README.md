@@ -8,8 +8,11 @@ aucun rééchantillonnage), en **12 calques** × 3 modes (jour / crépuscule / n
 - `scene/` : jour, crepuscule, nuit, `apercu_eau_animee.gif` · `apercu_beachsky_v1.html` : aperçu animé autonome
 - `SPECIFICATION.md`, `build.py`, `verify.py` (13 contrôles PASS), `package.py`, `manifest.json`, `verification.json`
 
-**Eau** : dans EoS l'eau des fonds est animée par cycle de palette (BPL) ; ici équivalent en 6 phases du calque 03 — quantification de
-la rampe d'eau sur 12 teintes, rotation des 6 teintes claires (crêtes/écume tournent, masse stable), alpha identique entre phases.
+**Eau (corrigée)** : calquée sur la mer canonique du dépôt (`sprites/cote_v2/01_promontoire/COTEV2_01_02_MER_PALETTE_00..07`,
+16 couleurs indexées, 8 phases, `FrameLength=10` ticks — MANUEL §13) : base fixe (32,184,248), lignes de vagues ondulées tous les 16 px
+portant 8 indices qui tournent d'un cran par phase dans la rampe V2 `(16,152,240)…(56,232,248)`, écume fixe ; alpha/géométrie identiques
+entre phases. Frames explicites (pas de palette indexée dans PMDO). La 1re version (rotation de rampe quantifiée sur le brut) est retirée.
+`bruts/mer_bandes_magenta.png` = témoin généré à bandes, non utilisé pour les pixels.
 **Crépuscule** : 55 % jour + 45 % filtre Abyss exact + voile chaud (+12, +2, −10) ; ciel = mélange 50/50 des ciels natifs jour/nuit.
 **Nuit** : filtre Abyss exact (blob 438383f4), ciel nuit + astres natifs.
 
