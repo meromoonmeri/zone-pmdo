@@ -1,0 +1,86 @@
+{
+  "all_pass": true,
+  "engine_tested": false,
+  "tests": [
+    {
+      "test": "1. dimensions 640x640 divisibles par 8",
+      "pass": true,
+      "detail": "10 calques × 2 variantes"
+    },
+    {
+      "test": "2a. alpha strictement 0/255 (sauf OMBRES)",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "test": "2b. zéro pixel magenta résiduel",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "test": "3. recomposition des calques = scène (jour)",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "test": "3. recomposition des calques = scène (nuit)",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "test": "3b. calques nuit = filtre Abyss exact des calques jour (02–09)",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "test": "4a. corridor 32 px libre du seuil au bord sud",
+      "pass": true,
+      "detail": "x 304-336, y 248-640"
+    },
+    {
+      "test": "4b. dégagement 16x16 donjon_seuil",
+      "pass": true,
+      "detail": "(312,248)"
+    },
+    {
+      "test": "4b. dégagement 16x16 entree",
+      "pass": true,
+      "detail": "(312,608)"
+    },
+    {
+      "test": "5. bouche connexe ≥ 40x40 autour de (320,130)",
+      "pass": true,
+      "detail": "bbox [300, 64, 353, 163]"
+    },
+    {
+      "test": "6a. bord sud ouvert sur ≥ 96 px centrés",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "test": "6b. rebords uniquement dans les coins bas",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "test": "7a. noms de fichiers uniques préfixés COLEBOULIS_V1_",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "test": "7b. SHA-256 des calques identiques au manifeste",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "test": "7c. SHA-256 des bruts identiques au manifeste",
+      "pass": true,
+      "detail": "7 bruts"
+    },
+    {
+      "test": "8. rochers épars sur le plateau, hors corridor",
+      "pass": true,
+      "detail": "10 instances"
+    }
+  ]
+}

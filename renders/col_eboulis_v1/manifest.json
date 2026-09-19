@@ -1,0 +1,258 @@
+{
+  "lot": "col_eboulis_v1",
+  "titre": "Le col des Éboulis — chemin vers l’entrée de Mont Horn",
+  "taille": [
+    640,
+    640
+  ],
+  "grille_px": 8,
+  "cellules": [
+    80,
+    80
+  ],
+  "cible": "PMDO 0.8.12, import PNG to Tileset 8 px",
+  "filtre_nuit": "Abyss V4 tools/tile_night.py (blob 438383f4) via outils/night.py, calques 02–09 ; nuages : formule des fonds Guilde/Sharpedo",
+  "bruts": {
+    "chaine_lointaine_magenta.png": {
+      "sha256": "6f7913e262e81acb2b7e053ebd43a19fb999173aabfd0ce0ebac566b89de7d0b",
+      "taille": [
+        1376,
+        768
+      ]
+    },
+    "chaine_proche_magenta.png": {
+      "sha256": "0b9acc55199f295aabcc36c4922da3345c8ccd6f1981bcdc65887757a9df1681",
+      "taille": [
+        1024,
+        1024
+      ]
+    },
+    "composition_G.png": {
+      "sha256": "77236c907f182afbece18e65b517199c2eb9d6a1a1b0e3140bdc4475934bf487",
+      "taille": [
+        1024,
+        1024
+      ]
+    },
+    "composition_H.png": {
+      "sha256": "9c557d8bb82c8889b1ba396e516b64dd27c503cebb1bdff858c7c1ecec61d22c",
+      "taille": [
+        1024,
+        1024
+      ]
+    },
+    "massif_magenta.png": {
+      "sha256": "a2753c8721a8accd4d126c200ed13160e3fb13f4b88a999d2c93787518190f15",
+      "taille": [
+        1024,
+        1024
+      ]
+    },
+    "rochers_magenta.png": {
+      "sha256": "91f18f2f27f56d640eaa39cb2fbff0ad6139af94b25d90a29706bda2760b9660",
+      "taille": [
+        1024,
+        1024
+      ]
+    },
+    "sol_chemin.png": {
+      "sha256": "86ce002fc62db5ef2eafaaa478aa5eca99dcc30ce0e3fe2871ac1d05dd6c123a",
+      "taille": [
+        1024,
+        1024
+      ]
+    }
+  },
+  "composition_retenue": "composition_H.png",
+  "compositions_ecartees": [
+    "composition_G.png"
+  ],
+  "reduction": "nearest 1024→640 (facteur 0,625) ; chaîne lointaine 1376→640",
+  "variantes": {
+    "jour": {
+      "calques": [
+        "COLEBOULIS_V1_JOUR_00_CIEL.png",
+        "COLEBOULIS_V1_JOUR_01_NUAGES.png",
+        "COLEBOULIS_V1_JOUR_02_CHAINE_LOINTAINE.png",
+        "COLEBOULIS_V1_JOUR_03_CHAINE_PROCHE.png",
+        "COLEBOULIS_V1_JOUR_04_SOL_CHEMIN.png",
+        "COLEBOULIS_V1_JOUR_05_OMBRES.png",
+        "COLEBOULIS_V1_JOUR_06_MASSIF_ET_BORDS.png",
+        "COLEBOULIS_V1_JOUR_07_ENTREE_PROFONDEUR.png",
+        "COLEBOULIS_V1_JOUR_08_ROCHERS_EPARS.png",
+        "COLEBOULIS_V1_JOUR_09_REBORDS_PREMIER_PLAN.png"
+      ],
+      "scene": "scene/jour.png"
+    },
+    "nuit": {
+      "calques": [
+        "COLEBOULIS_V1_NUIT_00_CIEL.png",
+        "COLEBOULIS_V1_NUIT_01_NUAGES.png",
+        "COLEBOULIS_V1_NUIT_02_CHAINE_LOINTAINE.png",
+        "COLEBOULIS_V1_NUIT_03_CHAINE_PROCHE.png",
+        "COLEBOULIS_V1_NUIT_04_SOL_CHEMIN.png",
+        "COLEBOULIS_V1_NUIT_05_OMBRES.png",
+        "COLEBOULIS_V1_NUIT_06_MASSIF_ET_BORDS.png",
+        "COLEBOULIS_V1_NUIT_07_ENTREE_PROFONDEUR.png",
+        "COLEBOULIS_V1_NUIT_08_ROCHERS_EPARS.png",
+        "COLEBOULIS_V1_NUIT_09_REBORDS_PREMIER_PLAN.png"
+      ],
+      "scene": "scene/nuit.png"
+    }
+  },
+  "rochers": [
+    [
+      237,
+      388,
+      216,
+      360,
+      31,
+      27,
+      6
+    ],
+    [
+      422,
+      422,
+      400,
+      392,
+      33,
+      28,
+      0
+    ],
+    [
+      227,
+      493,
+      208,
+      464,
+      28,
+      25,
+      5
+    ],
+    [
+      128,
+      517,
+      112,
+      488,
+      32,
+      28,
+      3
+    ],
+    [
+      444,
+      525,
+      424,
+      496,
+      32,
+      25,
+      8
+    ],
+    [
+      519,
+      536,
+      496,
+      504,
+      37,
+      32,
+      4
+    ],
+    [
+      237,
+      555,
+      224,
+      536,
+      22,
+      18,
+      7
+    ],
+    [
+      161,
+      577,
+      144,
+      552,
+      28,
+      24,
+      1
+    ],
+    [
+      423,
+      589,
+      400,
+      560,
+      35,
+      29,
+      2
+    ],
+    [
+      242,
+      597,
+      224,
+      576,
+      22,
+      19,
+      9
+    ]
+  ],
+  "points": {
+    "donjon_seuil": [
+      312,
+      248
+    ],
+    "entree": [
+      312,
+      608
+    ],
+    "bouche_bbox": [
+      300,
+      64,
+      353,
+      163
+    ],
+    "corridor": {
+      "x": [
+        304,
+        336
+      ],
+      "y": [
+        248,
+        640
+      ]
+    }
+  },
+  "calques_ordre": [
+    "00_CIEL",
+    "01_NUAGES",
+    "02_CHAINE_LOINTAINE",
+    "03_CHAINE_PROCHE",
+    "04_SOL_CHEMIN",
+    "05_OMBRES",
+    "06_MASSIF_ET_BORDS",
+    "07_ENTREE_PROFONDEUR",
+    "08_ROCHERS_EPARS",
+    "09_REBORDS_PREMIER_PLAN"
+  ],
+  "couche_devant_personnage": [
+    "09_REBORDS_PREMIER_PLAN"
+  ],
+  "sha256_couches": {
+    "COLEBOULIS_V1_JOUR_00_CIEL.png": "09cec8fb2bea2740a34aeece53d6c4a7073806a7320724d52c6ab2b0532505c7",
+    "COLEBOULIS_V1_JOUR_01_NUAGES.png": "ff22c72bb9c0aabcb55f08f02a57ff526b38d8a0182d1deed88e2aa216885d5b",
+    "COLEBOULIS_V1_JOUR_02_CHAINE_LOINTAINE.png": "1af9ad240c63b08f0da77f22459507183295fc0ff840861bfa5eb81511bd37f8",
+    "COLEBOULIS_V1_JOUR_03_CHAINE_PROCHE.png": "96430f02347e309981a1638200fcdb697ba1c42db87666fd1fc1ba86c5e94ecd",
+    "COLEBOULIS_V1_JOUR_04_SOL_CHEMIN.png": "08a473eb5f718730762240f6e3642922a598de6aac3aeb028eecf3d4d8610f88",
+    "COLEBOULIS_V1_JOUR_05_OMBRES.png": "ee44e73e4a2386f52051b32ff8de06acb6ab8841f8ed4ebb92a2b2600405dccb",
+    "COLEBOULIS_V1_JOUR_06_MASSIF_ET_BORDS.png": "84a122864c3b9e7ab94bc276b6ca5f5e492c643d20a08810aaa7987def9cd5a7",
+    "COLEBOULIS_V1_JOUR_07_ENTREE_PROFONDEUR.png": "e4a757e50da61c9a1f7ca58315ae0cef01d21f2e510453820f0bd1444866f321",
+    "COLEBOULIS_V1_JOUR_08_ROCHERS_EPARS.png": "dbdeb622e246cb8d10d7753cddaf8a0dd81e1bc1662bfca1b0442d03dbe49b89",
+    "COLEBOULIS_V1_JOUR_09_REBORDS_PREMIER_PLAN.png": "ad1a9e7e034967c87f3c0c1b654a8aa16d5b3b0163164174ba2c1d71bd356572",
+    "COLEBOULIS_V1_NUIT_00_CIEL.png": "9908d2f7627cd8c8e958c54f3b9da28debceac2dd66578763f5a0973be8cd348",
+    "COLEBOULIS_V1_NUIT_01_NUAGES.png": "e07b6a8bcd4f0b7ff07b9fc4697be202e612d055d9f513c15019ac53fb4ddaf8",
+    "COLEBOULIS_V1_NUIT_02_CHAINE_LOINTAINE.png": "dea7209f1011f832ae21e6d16f16a50d7035ce2a306061c3a7f348c36531e569",
+    "COLEBOULIS_V1_NUIT_03_CHAINE_PROCHE.png": "12dec38869a6741dbe3d8190762c075c89ae6d5612dac4036457c0848320dba9",
+    "COLEBOULIS_V1_NUIT_04_SOL_CHEMIN.png": "202be00d6de0fd51a2b08493f7cc5ef62aa73a4450c2ebe3867fb7a78e63555b",
+    "COLEBOULIS_V1_NUIT_05_OMBRES.png": "d7a01b87810e56af47f573c7cd223350bcb82505f111e9ca8317c404922b88f7",
+    "COLEBOULIS_V1_NUIT_06_MASSIF_ET_BORDS.png": "1d41d52543de9d1709dbbebf6e7eae6569e9662141c50942e8fba027c28fd8a2",
+    "COLEBOULIS_V1_NUIT_07_ENTREE_PROFONDEUR.png": "862325ff204e6273da7f28197f1566f93d15dcf5e473fd5acbe4b7682c7f24d3",
+    "COLEBOULIS_V1_NUIT_08_ROCHERS_EPARS.png": "3eb77b4e0cda00c2f3955d0fe2801426525b5fdf8a79404531f84e6eab6748c5",
+    "COLEBOULIS_V1_NUIT_09_REBORDS_PREMIER_PLAN.png": "9e81ff4f8ae9faa0de538f190dec42b73ee719055a4d09a36653a37f984a4c07"
+  }
+}
