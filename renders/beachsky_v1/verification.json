@@ -5,7 +5,7 @@
     {
       "test": "1. dimensions 1264x848 (÷8)",
       "pass": true,
-      "detail": "19 calques × 3 modes"
+      "detail": "37 calques × 3 modes"
     },
     {
       "test": "2a. alpha 0/255 sauf OMBRES",
@@ -38,9 +38,14 @@
       "detail": ""
     },
     {
-      "test": "4. phases eau : même alpha, couleurs différentes",
+      "test": "4a. vagues : 9 frames, même alpha, dessins différents",
       "pass": true,
-      "detail": "8 phases"
+      "detail": "9 frames"
+    },
+    {
+      "test": "4b. rivage : 17 frames, monte puis se retire, jamais sur l eau",
+      "pass": true,
+      "detail": "17 frames"
     },
     {
       "test": "5. dégagement 16x16 entree",

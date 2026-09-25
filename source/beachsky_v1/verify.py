@@ -19,13 +19,15 @@ check('2b. zéro magenta résiduel',sum(mag(a) for m in modes for a in lay[m])==
 for m in modes:
     sc=Image.new('RGBA',(W,H))
     for a,f in zip(lay[m],names[m]):
-        if '_03_' in f and not f.endswith('PHASE00.png'): continue
+        if 'PHASE' in f and not f.endswith('PHASE00.png'): continue
         sc.alpha_composite(Image.fromarray(a))
     check(f'3. recomposition = scène ({m})',np.array_equal(np.array(sc),np.array(Image.open(HERE/'scene'/f'{m}.png').convert('RGBA'))))
 j={f.split('_',3)[3]:a for a,f in zip(lay['jour'],names['jour'])}; n_={f.split('_',3)[3]:a for a,f in zip(lay['nuit'],names['nuit'])}
 check('3b. nuit = filtre Abyss exact (calques 02+)',all(np.array_equal(np.array(night(Image.fromarray(j[k]))),n_[k]) for k in j if not k.startswith(('00','01'))))
 ph=[a for a,f in zip(lay['jour'],names['jour']) if '_03_' in f]
-check('4. phases eau : même alpha, couleurs différentes',len(ph)==man['phases_eau'] and all(np.array_equal(ph[0][...,3],p[...,3]) for p in ph) and all(not np.array_equal(ph[0][...,:3],p[...,:3]) for p in ph[1:]),f'{len(ph)} phases')
+sh=[a for a,f in zip(lay['jour'],names['jour']) if '_04b_' in f]
+check('4a. vagues : 9 frames, même alpha, dessins différents',len(ph)==man['phases_eau'] and all(np.array_equal(ph[0][...,3],p[...,3]) for p in ph) and all(not np.array_equal(ph[0][...,:3],p[...,:3]) for p in ph[1:]),f'{len(ph)} frames')
+check('4b. rivage : 17 frames, monte puis se retire, jamais sur l eau',len(sh)==man['phases_rivage'] and all((a[...,3]>0)[ph[0][...,3]>0].sum()==0 for a in sh) and (sh[5][...,3]>0).sum()>(sh[1][...,3]>0).sum()>(sh[0][...,3]>0).sum()==0,f'{len(sh)} frames')
 solid=np.zeros((H,W),bool)
 for k,a in j.items():
     if k[:2] in ('07','08','09','10','11'): solid|=a[...,3]>0

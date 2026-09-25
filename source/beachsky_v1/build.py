@@ -115,40 +115,97 @@ deep = M & (dist_shore > 96)
 near = M & ~deep
 L_mer_prof = Image.fromarray(np.zeros((H, W, 4), 'uint8'))                        # réservé : base statique (vide, tout le plan cycle sur 03)
 
-V2_CYCLE = [(16,152,240),(24,160,240),(24,168,248),(40,200,248),(56,232,248),(32,176,248),(24,160,248),(32,152,248)]
+# ---------------------------------------------------------------------------------------------------------
+# EAU CANONIQUE BEACH (mesurée sur references/beach_ref.png, rip Beach & Path to Beach) :
+#  - base d'eau UNIE et FIXE (24,192,248) ; 19 couleurs en tout ;
+#  - 9 frames DESSINÉES (pas de palette cycling) : une crête cyan + écume blanche naît en haut de la bande,
+#    descend vers la plage en s'affaiblissant, la mer respire (petits traits), puis une houle bleu foncé
+#    (16,88,216) renaît en haut avec écume et grossit → boucle ;
+#  - rivage : 17 frames où l'écume monte sur le sable (sable mouillé ocre) puis se retire.
+# Ici : mêmes principes, reconstruits sur la géométrie de la composition validée. Frames explicites (MANUEL §13).
+# ---------------------------------------------------------------------------------------------------------
+BASE = np.array([24, 192, 248]); WHITE = np.array([248, 248, 248])
+CREST_LIGHT = np.array([144, 224, 232]); CREST_MID = np.array([72, 232, 248]); CREST_CYAN = np.array([112, 208, 248])
+SWELL_DARK = np.array([16, 88, 216]); SWELL_MID = np.array([16, 112, 224]); SWELL_LIGHT = np.array([40, 152, 240])
+RIPPLE = np.array([64, 208, 248])
+WET_SAND = np.array([214, 168, 74]); WET_SAND2 = np.array([232, 196, 110])
+N_WAVE, N_SHORE = 9, 17
+
+yy, xx = np.mgrid[:H, :W]
+# rivage principal = pour chaque colonne, première ligne d'eau (bord plage/mer) ; les vagues sont des lignes
+# horizontales ondulées mesurées en y depuis ce rivage (comme le rip : bandes horizontales, pas concentriques)
+shore_y = np.full(W, -1)
+for x in range(W):
+    ys = np.where(M[:, x])[0]
+    if len(ys): shore_y[x] = ys.min()
+shore_y = nd.uniform_filter1d(nd.median_filter(np.where(shore_y < 0, np.nanmedian(shore_y[shore_y >= 0]), shore_y), 41).astype(float), 25)
+dist_in = np.where(M, yy - shore_y[None, :], -1).astype(float)                    # profondeur (px sous le rivage)
+land_ring = land & ~M & (yy >= shore_y[None, :] - 20) & (yy < shore_y[None, :] + 2)
+dist_sand = np.clip(shore_y[None, :] - yy, 0, None).astype(float)                 # hauteur sur le sable
+wob = (3 * np.sin(xx / 31.0) + 1.5 * np.sin(xx / 13.0 + 0.9))
 
 
-def water_phases(img, mask, n=8):
-    """Palette cycling V2 sur géométrie régulière : lignes de vagues ondulées tous les 16 px (2 px d'épaisseur),
-    chaque ligne porte un indice 0..7 croissant vers le rivage ; base fixe (rivage clair / large sombre) ;
-    chaque phase décale les indices d'un cran → les crêtes avancent. Aucun pixel du brut n'est réinterprété
-    (le brut à bandes ne sert plus que de témoin), donc zéro bruit ; alpha/géométrie constants."""
-    a = arr(img)
-    fo = mask & (a[..., :3].min(axis=2) > 225)
-    body = mask & ~fo
-    dist = nd.distance_transform_edt(mask)
-    shore = body.copy()                                                              # une seule base (plan d'eau peu profond, comme Beach)
-    BASE_SHORE, BASE_DEEP = np.array([32, 184, 248]), np.array([0, 112, 232])         # bases V2 (idx 12 / idx 1)
-    cyc = np.array(V2_CYCLE, float); dark_cyc = np.rint(cyc * .78)
-    yy, xx = np.mgrid[:a.shape[0], :a.shape[1]]
-    wobble = (4 * np.sin(xx / 22.0) + 2 * np.sin(xx / 7.0 + 1.3)).astype(int)
-    row = yy + wobble
-    crest = body & ((row % 16) < 2)                                                   # lignes tous les 16 px
-    line_id = (row // 16)
-    idx = (-line_id) % n                                                              # indices croissants vers le bas (rivage)
+def band(center, thick, region):
+    d = dist_in + wob
+    return region & (d >= center - thick / 2) & (d < center + thick / 2)
+
+
+def wave_frames():
+    """9 frames : trajet d'une crête du large (d≈70) vers le rivage (d≈8), puis renaissance en houle sombre."""
     out = []
-    for p in range(n):
-        b_ = a.copy(); b_[~mask] = 0; b_[mask, 3] = 255
-        b_[shore, :3] = BASE_SHORE; b_[body & ~shore, :3] = BASE_DEEP
-        k = (idx + p) % n
-        cs, cd = crest & shore, crest & ~shore
-        b_[cs, :3] = cyc[k[cs]].astype('uint8'); b_[cd, :3] = dark_cyc[k[cd]].astype('uint8')
-        out.append(Image.fromarray(b_))
-    return out, n
+    # position de la crête principale par frame (distance au rivage) et intensité (0..1)
+    path = [(30, 1.0), (24, .8), (18, .55), (12, .3), (8, .12), (0, 0), (0, 0), (60, .7), (48, 1.0)]
+    for f in range(N_WAVE):
+        a = np.zeros((H, W, 4), 'uint8'); a[M, :3] = BASE; a[M, 3] = 255
+        # respiration : traits clairs épars, décalés à chaque frame (frames 3..6 surtout)
+        rip = M & (((yy + f * 2) % 23 < 2) & ((xx // 6 + f) % 7 < 2)) & (dist_in > 14)
+        a[rip, :3] = RIPPLE
+        c, k = path[f]
+        if k > 0 and f < 7:                                                      # crête cyan qui descend
+            a[band(c, 5, M), :3] = CREST_CYAN
+            a[band(c + 1, 2, M), :3] = CREST_MID
+            if k >= .8: a[band(c + 2, 2, M) & ((xx // 9) % 3 != 0), :3] = WHITE
+            elif k >= .5: a[band(c + 2, 1.5, M) & ((xx // 6) % 4 == 0), :3] = CREST_LIGHT
+        if f >= 7:                                                               # houle sombre qui naît au large
+            a[band(c, 9 if f == 8 else 6, M), :3] = SWELL_MID
+            a[band(c + 2, 3, M), :3] = SWELL_DARK
+            a[band(c - 3, 2, M), :3] = SWELL_LIGHT
+            a[band(c - 4, 2 if f == 7 else 3, M) & ((xx // 7) % 5 != 0), :3] = WHITE
+        # écume permanente au contact sable/eau (fine), plus forte quand la crête arrive (frames 3-5)
+        foamw = 2 + (2 if f in (3, 4, 5) else 0)
+        a[M & (dist_in <= foamw) & ((xx // 4 + f) % 5 != 0), :3] = WHITE
+        a[~M] = 0
+        out.append(Image.fromarray(a))
+    return out
 
 
-phases, ncols = water_phases(sea, M | deep, N_PHASES)                                # tout le plan d'eau cycle (comme la mer V2)
-N_PHASES = len(phases)
+def shore_frames():
+    """17 frames de rivage sur le SABLE : l'eau monte (sable mouillé + écume) puis se retire. Calque au-dessus du sable."""
+    out = []
+    reach = [0, 2, 6, 9, 11, 12, 12, 11, 10, 9, 8, 6, 4, 2, 1, 0, 0]              # avancée max en px sur le sable
+    for f in range(N_SHORE):
+        a = np.zeros((H, W, 4), 'uint8')
+        r = reach[f]
+        if r > 0:
+            d = dist_sand + wob * .6
+            wet = land_ring & (d <= r + 6)                                       # sable mouillé (reste après le retrait)
+            a[wet, :3] = WET_SAND2; a[wet, 3] = 255
+            wet2 = land_ring & (d <= r + 2)
+            a[wet2, :3] = WET_SAND; a[wet2, 3] = 255
+            film = land_ring & (d <= r)                                          # film d'eau
+            a[film, :3] = (BASE * .55 + WHITE * .45).astype('uint8'); a[film, 3] = 255
+            edge = land_ring & (d > r - 2) & (d <= r)                            # ligne d'écume
+            a[edge, :3] = WHITE; a[edge, 3] = 255
+        else:
+            # sable humide résiduel très léger en fin de cycle (frames 15,16 : rien / frame 0 : rien)
+            pass
+        a[~land_ring] = 0
+        out.append(Image.fromarray(a))
+    return out
+
+
+phases = wave_frames(); N_PHASES = len(phases); shore_phases = shore_frames()
+L_mer_prof = Image.fromarray(np.zeros((H, W, 4), 'uint8'))                        # réservé (base incluse dans les frames)
 
 # --- ombres calculées
 solid = north | spurs | palms | S_
@@ -205,38 +262,40 @@ CLOUDS = {'jour': clouds, 'nuit': grade_clouds(clouds), 'crepuscule': Image.blen
 TERRAIN = [('02_MER_PROFONDE', L_mer_prof), ('04_SABLE', L_sable), ('05_SENTIER_ROCHE', L_sentier), ('06_OMBRES', L_ombres),
            ('07_FALAISES_NORD', L_falaises), ('08_GROTTE_PROFONDEUR', L_grotte), ('09_POINTES_ROCHEUSES', L_pointes),
            ('10_HERBES', L_herbes), ('11_PALMIERS', L_palmiers)]
-man = {'lot': 'beachsky_v1', 'taille': [W, H], 'grille_px': 8, 'cellules': [W // 8, H // 8], 'phases_eau': N_PHASES,
-       'eau': f'calque 03 en {N_PHASES} phases : palette cycling calqué sur la mer V2 du dépôt (16 couleurs, 8 phases, base/écume fixes, 8 indices de vagues qui tournent, période spatiale 32 px) ; FrameLength=10 ticks (≈1,33 s/boucle à 60 Hz) comme MANUEL §13',
+man = {'lot': 'beachsky_v1', 'taille': [W, H], 'grille_px': 8, 'cellules': [W // 8, H // 8], 'phases_eau': N_PHASES, 'phases_rivage': N_SHORE,
+       'eau': 'canon Beach (rip beach_ref.png mesuré) : base unie fixe (24,192,248) + 9 frames dessinées de vagues (crête cyan/écume qui naît au large, descend, s\'efface, houle sombre renaît) sur le calque 03 ; 17 frames de rivage sur le sable (écume monte, sable mouillé, retrait) sur le calque 04b ; frames explicites, FrameLength=10 ticks par défaut (cadence officielle non connue)',
        'nuages': {'bande': f'{PREFIX}_NUAGES_BANDE_1440x136.png', 'vitesse_px_s': -4, 'boucle': True},
        'modes': {}, 'bruts': {p.name: {'sha256': sha(p), 'taille': list(Image.open(p).size)} for p in sorted(list(BR.glob('*.png')) + list(VA.glob('*.png')))}}
 for mode in ['jour', 'crepuscule', 'nuit']:
     f = mode_fn(mode)
     layers = [('00_CIEL', SKY[mode]), ('01_NUAGES', CLOUDS[mode])]
     layers += [(n, f(im)) for n, im in TERRAIN if n < '03']
-    layers += [(f'03_MER_RIVAGE_PHASE{p:02}', f(ph)) for p, ph in enumerate(phases)]
-    layers += [(n, f(im)) for n, im in TERRAIN if n > '03']
+    layers += [(f'03_MER_VAGUES_PHASE{p:02}', f(ph)) for p, ph in enumerate(phases)]
+    layers += [(n, f(im)) for n, im in TERRAIN if n > '03' and n < '04z']
+    layers += [(f'04b_RIVAGE_SABLE_PHASE{p:02}', f(ph)) for p, ph in enumerate(shore_phases)]
+    layers += [(n, f(im)) for n, im in TERRAIN if n > '04z']
     names = []
     for n, im in layers:
         assert im.size == (W, H), n
         fn = f'{PREFIX}_{mode.upper()}_{n}.png'; im.save(COU / fn, optimize=True); names.append(fn)
     scene = Image.new('RGBA', (W, H))
     for n, im in layers:
-        if n.startswith('03_') and not n.endswith('PHASE00'): continue
+        if ('PHASE' in n) and not n.endswith('PHASE00'): continue
         scene.alpha_composite(im)
     scene.save(SC / f'{mode}.png', optimize=True)
     man['modes'][mode] = {'calques': names, 'scene': f'scene/{mode}.png'}
-    if mode == 'jour':                                                          # GIF d'aperçu de l'animation de l'eau
+    if mode == 'jour':                                                          # GIF d'aperçu (vagues 9 + rivage 17, boucle 153 frames)
+        under = Image.new('RGBA', (W, H)); mid = Image.new('RGBA', (W, H)); over = Image.new('RGBA', (W, H))
+        for n, im in layers:
+            if 'PHASE' in n: continue
+            if n < '03': under.alpha_composite(im)
+            elif n < '04b': mid.alpha_composite(im)
+            else: over.alpha_composite(im)
         frames = []
-        base = Image.new('RGBA', (W, H))
-        for n, im in layers:
-            if n < '03': base.alpha_composite(im)
-        over = Image.new('RGBA', (W, H))
-        for n, im in layers:
-            if n > '03' and not n.startswith('03'): over.alpha_composite(im)
-        for p, ph in enumerate(phases):
-            fr = base.copy(); fr.alpha_composite(ph); fr.alpha_composite(over)
+        for t in range(N_WAVE * 2):
+            fr = under.copy(); fr.alpha_composite(phases[t % N_WAVE]); fr.alpha_composite(mid); fr.alpha_composite(shore_phases[t % N_SHORE]); fr.alpha_composite(over)
             frames.append(fr.crop((300, 480, 900, 848)).convert('P', palette=Image.ADAPTIVE, colors=128))
-        frames[0].save(SC / 'apercu_eau_animee.gif', save_all=True, append_images=frames[1:], duration=130, loop=0)
+        frames[0].save(SC / 'apercu_eau_animee.gif', save_all=True, append_images=frames[1:], duration=167, loop=0)
 # points clés
 free = land & ~nd.binary_dilation(solid | cave, iterations=2)
 man['points'] = {'entree': [640, 440], 'donjon_seuil': None}
@@ -246,4 +305,4 @@ man['points']['donjon_seuil'] = [int(sx), int(sy)]
 man['points']['grotte_bbox'] = [int(v) for v in (np.where(cave)[1].min(), np.where(cave)[0].min(), np.where(cave)[1].max() + 1, np.where(cave)[0].max() + 1)] if cave.any() else None
 man['sha256_couches'] = {p.name: sha(p) for p in sorted(COU.glob('*.png'))}
 (HERE / 'manifest.json').write_text(json.dumps(man, ensure_ascii=False, indent=2))
-print('grotte', man['points']['grotte_bbox'], 'seuil', man['points']['donjon_seuil'], '| teintes eau', ncols, '| calques/mode', len(man['modes']['jour']['calques']))
+print('grotte', man['points']['grotte_bbox'], 'seuil', man['points']['donjon_seuil'], '| frames vagues', N_WAVE, 'rivage', N_SHORE, '| calques/mode', len(man['modes']['jour']['calques']))
